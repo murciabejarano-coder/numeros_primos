@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificador de Números Primos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+      --prime-color: #10b981;
+      --prime-glow: rgba(16, 185, 129, 0.35);
+      --non-prime-color: #f43f5e;
+      --non-prime-glow: rgba(244, 63, 94, 0.35);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --accent: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      padding: 1.5rem;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .ambient-glow {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 2.75rem 2.25rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      text-align: center;
+      transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.925rem;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px;
+      padding: 1.1rem 1.25rem;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"]:focus {
+      border-color: rgba(99, 102, 241, 0.6);
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    }
+
+    input[type="number"]::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+      font-weight: 400;
+    }
+
+    button {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 1.05rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 26px -5px rgba(99, 102, 241, 0.55);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px -3px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Result Container */
+    .result-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.6rem 1.4rem;
+      border-radius: 20px;
+      margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-container.show {
+      display: flex;
+    }
+
+    .icon-wrapper {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .icon-wrapper svg {
+      width: 34px;
+      height: 34px;
+      stroke-width: 2.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .result-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.35rem;
+    }
+
+    .result-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Animations: Prime (Success) */
+    .is-prime {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      animation: popInPrime 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .is-prime .icon-wrapper {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--prime-color);
+      box-shadow: 0 0 30px var(--prime-glow);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    .is-prime .result-title {
+      color: var(--prime-color);
+    }
+
+    /* Animations: Non-Prime (Decline / Shake) */
+    .is-not-prime {
+      background: rgba(244, 63, 94, 0.08);
+      border: 1px solid rgba(244, 63, 94, 0.25);
+      animation: shakeRotate 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    .is-not-prime .icon-wrapper {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--non-prime-color);
+      box-shadow: 0 0 25px var(--non-prime-glow);
+      animation: gentleDrop 0.5s ease-out;
+    }
+
+    .is-not-prime .result-title {
+      color: var(--non-prime-color);
+    }
+
+    /* Keyframes */
+    @keyframes popInPrime {
+      0% {
+        opacity: 0;
+        transform: scale(0.85) translateY(12px);
+      }
+      70% {
+        transform: scale(1.04) translateY(-3px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 35px rgba(16, 185, 129, 0.55);
+        transform: scale(1.06);
+      }
+    }
+
+    @keyframes shakeRotate {
+      0% {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      15% {
+        opacity: 1;
+        transform: translateX(-9px) rotate(-1.5deg);
+      }
+      30% {
+        transform: translateX(8px) rotate(1.5deg);
+      }
+      45% {
+        transform: translateX(-6px) rotate(-1deg);
+      }
+      60% {
+        transform: translateX(5px) rotate(0.8deg);
+      }
+      75% {
+        transform: translateX(-2px) rotate(-0.4deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes gentleDrop {
+      0% {
+        transform: scale(0.6) translateY(-10px);
+      }
+      100% {
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Small decorative footer */
+    .footer-hints {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 1.5rem;
+    }
+
+    .quick-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quick-chip:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow" id="ambientGlow"></div>
+
+  <main class="card" id="mainCard">
+    <div class="badge">
+      <span class="dot"></span>
+      Matemáticas &bull; Algoritmo
+    </div>
+
+    <h1>¿Es Número Primo?</h1>
+    <p class="subtitle">Ingresa un número entero positivo para descubrir si es divisible solo por 1 y por sí mismo.</p>
+
+    <form id="primeForm" onsubmit="handleCheck(event)">
+      <div class="form-group">
+        <div class="input-wrapper">
+          <input 
+            type="number" 
+            id="numberInput" 
+            placeholder="Ej. 17" 
+            min="0" 
+            step="1"
+            autocomplete="off"
+            required
+            autofocus
+          >
+        </div>
+        <button type="submit" id="btnSubmit">
+          <span>Verificar</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+    </form>
+
+    <div class="footer-hints">
+      <span class="quick-chip" onclick="setNumber(7)">Ej: 7</span>
+      <span class="quick-chip" onclick="setNumber(12)">Ej: 12</span>
+      <span class="quick-chip" onclick="setNumber(97)">Ej: 97</span>
+      <span class="quick-chip" onclick="setNumber(100)">Ej: 100</span>
+    </div>
+
+    <div class="result-container" id="resultContainer" aria-live="polite">
+      <div class="icon-wrapper" id="resultIcon"></div>
+      <h2 class="result-title" id="resultTitle"></h2>
+      <p class="result-desc" id="resultDesc"></p>
+    </div>
+  </main>
+
+  <script>
+    function isPrime(n) {
+      if (!Number.isInteger(n) || n <= 1) return { prime: false, reason: 'Los números primos deben ser enteros mayores a 1.' };
+      if (n === 2) return { prime: true, reason: 'El 2 es el único número primo que además es par.' };
+      if (n % 2 === 0) return { prime: false, reason: `Es divisible por 2 (${n} = 2 × ${n / 2}).` };
+
+      // Prueba con números impares hasta la raíz cuadrada
+      const limit = Math.floor(Math.sqrt(n));
+      for (let i = 3; i <= limit; i += 2) {
+        if (n % i === 0) {
+          return { prime: false, reason: `Es divisible por ${i} (${n} = ${i} × ${n / i}).` };
+        }
+      }
+      return { prime: true, reason: `Solo es divisible por 1 y exactamente por sí mismo (${n}).` };
+    }
+
+    function fireConfetti() {
+      if (typeof confetti !== 'undefined') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']
+        });
+      }
+    }
+
+    function setNumber(val) {
+      const input = document.getElementById('numberInput');
+      input.value = val;
+      input.focus();
+      handleCheck(new Event('submit'));
+    }
+
+    function handleCheck(e) {
+      if (e) e.preventDefault();
+
+      const input = document.getElementById('numberInput');
+      const valStr = input.value.trim();
+      if (!valStr) return;
+
+      const n = Number(valStr);
+      const res = isPrime(n);
+
+      const container = document.getElementById('resultContainer');
+      const iconWrapper = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const desc = document.getElementById('resultDesc');
+      const ambientGlow = document.getElementById('ambientGlow');
+      const card = document.getElementById('mainCard');
+
+      // Reset animations
+      container.className = 'result-container';
+      void container.offsetWidth; // Forzar reflow
+
+      if (res.prime) {
+        container.classList.add('show', 'is-prime');
+        ambientGlow.style.background = 'radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, transparent 70%)';
+        card.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+
+        iconWrapper.innerHTML = `
+          <svg viewBox="0 0 24 24" stroke="currentColor">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        title.textContent = `¡El ${n} es primo!`;
+        desc.textContent = res.reason;
+
+        fireConfetti();
+      } else {
+        container.classList.add('show', 'is-not-prime');
+        ambientGlow.style.background = 'radial-gradient(circle, rgba(244, 63, 94, 0.28) 0%, transparent 70%)';
+        card.style.borderColor = 'rgba(244, 63, 94, 0.3)';
+
+        iconWrapper.innerHTML = `
+          <svg viewBox="0 0 24 24" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        `;
+        title.textContent = `El ${n} no es primo`;
+        desc.textContent = res.reason;
+      }
+    }
+  </script>
+</body>
+</html>
